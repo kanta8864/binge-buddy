@@ -8,7 +8,7 @@ from binge_buddy.memory import Memory, EpisodicMemory
 from binge_buddy.memory_db import MemoryDB
 from binge_buddy.memory_handler import EpisodicMemoryHandler
 from binge_buddy.message import UserMessage
-from binge_buddy.ollama import OllamaLLM
+from binge_buddy.ollama import OllamaLLM, OpenAILLM
 from binge_buddy.state_graph import CustomStateGraph
 
 class EpisodicWorkflow(MultiAgentWorkflow):
@@ -112,20 +112,24 @@ if __name__ == "__main__":
     if result:
         existing_memories = []
         print(
-            f"Found existing memories for user: {user_id}, Memories: {result['memory']}"
+            f"Found existing memories for user: {user_id}, Memories: {result['memory'].items()}"
         )
-        for attr, information in result["memory"].items():
-            existing_memories.append(
-                EpisodicMemory(information=information, attribute=attr)
-            )
+        for attr, information_list in result["memory"].items():
+            for memory_item in information_list:
+                existing_memories.append(
+                    EpisodicMemory(
+                        information=memory_item[attr],  # The actual memory text
+                        attribute=attr,
+                        timestamp=memory_item['timestamp']  # The associated timestamp
+                    )
+                )
     else:
         existing_memories = []
 
     episodic_workflow = EpisodicWorkflow(memory_handler)
 
     content = """
-    I am Vivian and I love watching movies. I am a big fan of 
-    the Harry Potter series and I have watched all the movies.
+    I am Vivian and I love fantasy, especially Lord of the Rings. I also enjoy Marvel movies.
     """ 
     
     message = UserMessage(content=content, user_id=user_id, session_id="123")
@@ -139,7 +143,7 @@ if __name__ == "__main__":
     episodic_workflow.run_with_logging(state)
     
     # Test db entry
-    # query = {"user_id": user_id}
-    # result = memory_db.find_one(collection_name, query)
+    query = {"user_id": user_id}
+    result = memory_db.find_one(collection_name, query)
     
-    # print(f"Current DB entry for user: {result}")
+    print(f"Current DB entry for user: {result}")

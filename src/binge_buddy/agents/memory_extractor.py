@@ -97,11 +97,9 @@ class MemoryExtractor(BaseAgent):
 
                 ```python
                 [
-                    "Likes action movies",
-                    "Dislikes horror",
-                    "Favorite movie is Inception",
-                    "Watches mostly on Netflix",
-                    "Prefers witty and sarcastic characters"
+                    "...",
+                    "...",
+                    "..."
                 ]
                 ```
 
@@ -109,8 +107,7 @@ class MemoryExtractor(BaseAgent):
                 Do not use dashes, bullets, or extra characters:
                 - "Likes action movies"
                 - "Dislikes horror"
-
-                FINAL WARNING: ONLY return a valid Python list of strings and nothing else. Any deviation from this format is an error. Even if you are repairing a message,
+                - FINAL WARNING: ONLY return a valid Python list of strings and nothing else. Any deviation from this format is an error. Even if you are repairing a message,
                 the response should only return a valid Python list of strings without any extra labels, dashes, attributes, or helpful message. Remember this.
          """,
         )

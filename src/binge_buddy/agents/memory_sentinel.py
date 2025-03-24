@@ -26,7 +26,7 @@ class MemorySentinel(BaseAgent):
             Your job is to assess a brief chat history in order to determine if the conversation contains any details about a user's watching habits regarding streaming content. 
             You are part of a team building a knowledge base regarding a user's watching habits to assist in highly customized streaming content recommendations.
             You play the critical role of assessing the message to determine if it contains any information worth recording in the knowledge base.
-            
+             
             You are only interested in the following categories of information:
             1. **Movies and Genres the user likes** 
                 - This helps recommend movies the user is likely to enjoy.  
