@@ -94,3 +94,17 @@ class EpisodicMemoryHandler(MemoryHandler):
                 {"$push": {f"memory.{attribute}": db_entry}},
                 upsert=True,
             )
+            
+    def get_existing_memories(self, user_id):
+        query = {"user_id": user_id}  # Query to find the user
+        result = self.memory_db.find_one(
+            self.collection_name, query
+        )  # Fetch the document
+        existing_memories = []
+        if result:
+            for attr, information in result["memory"].items():
+                existing_memories.append(
+                    SemanticMemory(information=information, attribute=attr)
+                )
+
+        return existing_memories
