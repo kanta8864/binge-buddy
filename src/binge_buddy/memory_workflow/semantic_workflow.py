@@ -20,7 +20,8 @@ class SemanticWorkflow(MultiAgentWorkflow):
         super().__init__()
 
         # todo: change this to use global llm
-        llm = OllamaLLM()
+        model = "deepseek-r1:8b"
+        llm = OllamaLLM(model=model)
         memory_sentinel = MemorySentinel(llm)
         memory_extractor = MemoryExtractor(llm)
         extractor_reviewer = ExtractorReviewer(llm)

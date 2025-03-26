@@ -159,7 +159,7 @@ class MemoryExtractor(BaseAgent):
 
         except (SyntaxError, ValueError) as e:
             logging.error(
-                f"Memory parsing error: {e}"
+                f"Memory parsing error: {str(e)}"
             )  # Optional logging for debugging
             return []  # Return empty list if parsing fails
 
