@@ -129,6 +129,7 @@ class SemanticWorkflow(MultiAgentWorkflow):
 if __name__ == "__main__":
 
     memory_db = MemoryDB()
+    memory_handler = SemanticMemoryHandler(memory_db)
 
     user_id = "kanta"
 
@@ -149,7 +150,7 @@ if __name__ == "__main__":
     else:
         existing_memories = []
 
-    semantic_workflow = SemanticWorkflow(memory_db)
+    semantic_workflow = SemanticWorkflow(memory_handler)
 
     content = """
     I am Kanta, I love furries and a lot of kitty cats. I am interested in watching many cat related

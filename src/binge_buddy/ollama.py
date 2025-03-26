@@ -9,10 +9,12 @@ from langchain.schema import PromptValue  # Import ChatPromptValue
 
 class OllamaLLM(LLM):  # Inherit from the LLM base class
     # model: str = "llama2:7b"  
-    model: str = "deepseek-r1:8b"  
+    # model: str = "deepseek-r1:8b"  
+    model: str = "neural-chat:7b"
     # model: str = "deepseek-llm:7b"
     # model: str = "llama3-gradient:8b"
     temperature: float = 0.0  # Default temperature
+    gpu_layers: int = 15
 
     def _call(self, prompt: str, **kwargs) -> str:
         """
@@ -28,6 +30,7 @@ class OllamaLLM(LLM):  # Inherit from the LLM base class
             "prompt": prompt,  # Use the stringified prompt
             "stream": False,
             "temperature": self.temperature,
+            
         }
         response = requests.post(url, json=payload)
         if response.status_code == 200:
