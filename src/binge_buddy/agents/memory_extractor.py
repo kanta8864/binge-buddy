@@ -174,6 +174,10 @@ class MemoryExtractor(BaseAgent):
             and state.extracted_memories
             and state.repair_message is not None
         ):
+            if state.retry_count > 20:
+                state.extracted_memories = []
+                return state
+
             messages["repair_message"] = [state.repair_message.to_langchain_message()]
             messages["memories_to_repair"] = [
                 AIMessage(
@@ -182,6 +186,10 @@ class MemoryExtractor(BaseAgent):
                     )
                 )
             ]
+
+            state.retry_count += 1
+            state.needs_repair = False
+            state.repair_message = None
 
         # Run the pipeline and get the response
         response = utils.remove_think_tags(

@@ -32,13 +32,13 @@ class Message(BaseMessage):
         user_id: str,
         session_id: str,
     ) -> "Message":
-        role = "user" if isinstance(lc_message, HumanMessage) else "agent"
+        role = "user" if isinstance(lc_message, HumanMessage) else "system"
         return Message(
             content=lc_message.content,
             role=role,
             user_id=user_id,
             session_id=session_id,
-            type="human",
+            type=role,
         )
 
     def as_dict(self) -> MessageDict:
@@ -80,7 +80,7 @@ class Message(BaseMessage):
 
 class UserMessage(Message):
     role: str = "user"
-    type: str = "human"
+    type: str = "user"
 
     def to_langchain_message(self) -> Union[HumanMessage, AIMessage]:
         return HumanMessage(content=self.content)
@@ -93,8 +93,8 @@ class UserMessage(Message):
 
 
 class AgentMessage(Message):
-    role: str = "agent"
-    type: str = "agent"
+    role: str = "system"
+    type: str = "system"
 
     def to_langchain_message(self) -> Union[HumanMessage, AIMessage]:
         return AIMessage(content=self.content)

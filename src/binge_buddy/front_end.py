@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 
@@ -7,16 +8,17 @@ from binge_buddy.conversational_agent_manager import ConversationalAgentManager
 from binge_buddy.memory_db import MemoryDB
 from binge_buddy.memory_handler import EpisodicMemoryHandler, SemanticMemoryHandler
 from binge_buddy.message_log import MessageLog
-from binge_buddy.ollama import OllamaLLM
+from binge_buddy.ollama import OllamaLLM, OpenAILLM
 from binge_buddy.perception.audito_transcriber import AudioTranscriber
 from binge_buddy.perception.sentiment_analyzer import SentimentAnalyzer
 
 
 class FrontEnd:
-    def __init__(self, mode):
+    def __init__(self, mode, user_id="user", session_id="session"):
         # Set up the Flask app
         self.app = Flask(__name__)
-        self.llm = OllamaLLM()
+        # self.llm = OllamaLLM(model="neural-chat:7b")
+        self.llm = OpenAILLM()
         self.sentiment_analyzer = SentimentAnalyzer()
         self.memory_db = MemoryDB()
         self.mode = mode
@@ -25,9 +27,12 @@ class FrontEnd:
         else:
             memory_handler = EpisodicMemoryHandler(self.memory_db)
 
+        self.user_id = user_id
+        self.session_id = session_id
+
         self.message_log = MessageLog(
-            user_id="user",
-            session_id="session",
+            user_id=user_id,
+            session_id=session_id,
             memory_handler=memory_handler,
             mode=mode,
         )
@@ -47,12 +52,14 @@ class FrontEnd:
             data = request.get_json()
             if "text" in data:
                 user_message = data["text"]
-                print(f"User message received: {user_message}")
+                logging.info(f"FrontEnd: User message received: {user_message}")
                 # todo: update userID and sessionID
                 message = self.sentiment_analyzer.extract_emotion(
-                    user_message, "userId", "sessionId"
+                    user_message, self.user_id, self.session_id
                 )
-                ca = self.conversational_agent_manager.get_agent("userId", "sessionId")
+                ca = self.conversational_agent_manager.get_agent(
+                    self.user_id, self.session_id
+                )
                 response = ca.process_message(message)
                 return jsonify({"response": response})
 

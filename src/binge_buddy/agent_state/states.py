@@ -13,6 +13,7 @@ class AgentStateDict(TypedDict, total=False):  # total=False makes all fields op
     extracted_memories: Optional[List[MemoryDict]]
     needs_repair: Optional[bool]
     repair_message: Optional[Message]
+    retry_count: int
 
 
 class AgentState(ABC):
@@ -26,6 +27,7 @@ class AgentState(ABC):
         extracted_memories: Optional[List[Memory]] = None,
         needs_repair: Optional[bool] = None,
         repair_message: Optional[Message] = None,
+        retry_count: int = 0,
     ):
         self.user_id = user_id
         self.existing_memories = existing_memories
@@ -35,6 +37,7 @@ class AgentState(ABC):
         self.needs_repair = needs_repair
         self.repair_message = repair_message
         self.state_type = state_type
+        self.retry_count = retry_count
 
     def as_dict(self) -> AgentStateDict:
         """Convert state object to dictionary for LangGraph compatibility."""
@@ -50,6 +53,7 @@ class AgentState(ABC):
             ),
             "needs_repair": self.needs_repair,
             "repair_message": self.repair_message.as_dict(),
+            "retry_count": self.retry_count,
         }
 
     @classmethod
@@ -67,6 +71,7 @@ class AgentState(ABC):
             ),
             needs_repair=data.get("needs_repair"),
             repair_message=data.get("repair_message"),
+            retry_count=data.get("retry_count"),
         )
 
 

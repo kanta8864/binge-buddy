@@ -94,6 +94,9 @@ class MemoryAggregator(BaseAgent):
                 SystemMessagePromptTemplate.from_template(self.system_prompt_initial),
                 MessagesPlaceholder(variable_name="existing_memories", optional=True),
                 MessagesPlaceholder(variable_name="extracted_memories"),
+                MessagesPlaceholder(
+                    variable_name="repair_message", optional=True
+                ),  # Holds the repair message if present
             ]
         )
         self.llm_runnable = RunnableLambda(lambda x: self.llm._call(x))
@@ -139,9 +142,9 @@ class MemoryAggregator(BaseAgent):
 
         messages = {}
 
-        assert (
-            state.extracted_memories
-        ), "No extracted memories found by memory aggregator"
+        if state.extracted_memories is None:
+            return state
+
         messages["extracted_memories"] = [
             AIMessage(
                 content=json.dumps(
@@ -161,6 +164,17 @@ class MemoryAggregator(BaseAgent):
 
         else:
             messages["existing_memories"] = []
+
+        if state.needs_repair and state.repair_message is not None:
+            if state.retry_count > 20:
+                state.aggregated_memories = []
+                return state
+
+            messages["repair_message"] = [state.repair_message.to_langchain_message()]
+
+            state.retry_count += 1
+            state.needs_repair = False
+            state.repair_message = None
 
         response = self.memory_aggregator_runnable.invoke(messages)
 

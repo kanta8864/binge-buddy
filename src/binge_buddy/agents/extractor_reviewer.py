@@ -1,6 +1,6 @@
 import json
-import re
 import logging
+import re
 
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -125,6 +125,7 @@ class ExtractorReviewer(BaseAgent):
 
         if parsed_output["status"] == "APPROVED":
             state.needs_repair = False
+            state.retry_count = 0
         else:
             state.needs_repair = True
             state.repair_message = AgentMessage(
@@ -132,7 +133,7 @@ class ExtractorReviewer(BaseAgent):
                 user_id=state.user_id,
                 session_id=state.current_user_message.session_id,
             )
-            
+
         logging.info(f"Extractor Reviewer Response: {parsed_output['status']}")
         logging.info(f"Extractor Reviewer Reasoning: {parsed_output['message']}")
 

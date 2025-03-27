@@ -1,284 +1,335 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Voice Recorder and Chat</title>
-        <style>
-        .processing-indicator, .agent-typing-indicator {
-            font-size: 16px;
-            color: #888;
-            margin-top: 10px;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
-        }
-        .record-btn {
-            background-color: red;
-            color: white;
-            border: none;
-            padding: 15px;
-            font-size: 18px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        .recording {
-            background-color: darkred;
-        }
-        .audio-container {
-            margin-top: 20px;
-        }
-        .upload-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: green;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .upload-btn:disabled {
-            background-color: #ccc;
-        }
-        .input-container {
-            margin-top: 20px;
-        }
-        .input-container input {
-            padding: 10px;
-            font-size: 16px;
-            width: 300px;
-        }
-        /* Chat interface styling */
-        .chat-container {
-            margin-top: 30px;
-            width: 100%;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            height: 400px; /* Increased height */
-            display: flex;
-            flex-direction: column;
-        }
-        .messages {
-            max-height: 350px; /* Limit the message container height */
-            overflow-y: auto;
-            margin-bottom: 20px;
-            flex-grow: 1; /* Allow messages to take up available space */
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start; /* Align all child elements to the left by default */
-        }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Recorder and Chat</title>
+    <style>
+      .processing-indicator,
+      .agent-typing-indicator {
+        font-size: 16px;
+        color: #888;
+        margin-top: 10px;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh; /* Full viewport height */
+      }
+      .record-btn-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+        width: 100%; /* Ensure it takes full width */
+      }
 
-        .messages p {
-            margin: 5px 0;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 60%; /* Limit the width of the message bubbles */
-            word-wrap: break-word; /* Ensure long words don't overflow */
-        }
+      .record-btn {
+        width: 60px; /* Set a fixed width */
+        height: 60px; /* Set a fixed height */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        border-radius: 50%;
+        background-color: red;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
 
-        .user-msg {
-            text-align: left;
-            background-color: #d1e7ff;
-            align-self: flex-start; /* Align to the left */
-        }
+      .record-btn.recording {
+        background-color: darkred;
+      }
+      .audio-container {
+        margin-top: 20px;
+      }
+      .upload-btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: green;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .upload-btn:disabled {
+        background-color: #ccc;
+      }
+      .input-container {
+        margin-top: 20px;
+      }
+      .input-container input {
+        padding: 10px;
+        font-size: 16px;
+        width: 300px;
+      }
+      /* Chat interface styling */
+      .chat-container {
+        flex-grow: 1; /* Allow it to take available space */
+        display: flex;
+        flex-direction: column;
+        max-width: 600px;
+        width: 100%;
+        margin: auto;
+        border: 1px solid #ddd;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        height: auto; /* Let it expand dynamically */
+        min-height: 0; /* Prevent flex issues */
+      }
 
-        .agent-msg {
-            text-align: left;
-            background-color: #e8e8e8;
-            align-self: flex-end; /* Align to the right */
-        }
+      .messages {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start; /* Default alignment for user messages */
+        flex-grow: 1;
+        overflow-y: auto;
+        max-height: calc(100vh - 200px); /* Adjust dynamically */
+      }
 
-        .chat-input-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;  /* Ensure the container uses the full available width */
-        }
+      .messages p {
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 60%; /* Limit the width of the message bubbles */
+        word-wrap: break-word; /* Ensure long words don't overflow */
+      }
 
-        .chat-input-container input {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            flex-grow: 1;  /* Allow input field to expand based on content */
-            max-width: 80%;  /* Prevent it from growing too large */
-            min-width: 120px; /* Minimum width for the input field */
-        }
+      .user-msg {
+        text-align: left;
+        background-color: #d1e7ff;
+        align-self: flex-start; /* Align to the left */
+      }
 
-        .chat-input-container button {
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: 10px;  /* Add some space between the input and button */
-        }
+      .agent-msg {
+        text-align: left;
+        background-color: #e8e8e8;
+        align-self: flex-end; /* Pushes this message bubble to the right */
+        margin-left: auto;
+        margin-right: 10px; /* Optional: adds spacing from the right edge */
+      }
 
-        .chat-input-container button:disabled {
-            background-color: #ccc;
-        }
+      .chat-input-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: white;
+        position: sticky;
+        bottom: 0;
+      }
 
+      .chat-input-container input {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        flex-grow: 1; /* Allow input field to expand based on content */
+        max-width: 80%; /* Prevent it from growing too large */
+        min-width: 120px; /* Minimum width for the input field */
+      }
+
+      .chat-input-container button {
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 10px; /* Add some space between the input and button */
+      }
+
+      .chat-input-container button:disabled {
+        background-color: #ccc;
+      }
     </style>
-    </head>
-    <body>
-        <h1>Voice Recorder and Chat</h1>
-        <h3>You can either send a message through text or voice note</h3>
-        <button id="recordBtn" class="record-btn">🎤</button>
-        <div class="audio-container" id="audioContainer"></div>
-        <button id="uploadBtn" class="upload-btn" style="display:none;">Upload
-            Audio</button>
-        <div class="chat-container">
-            <div class="messages" id="messages"></div>
+  </head>
+  <body>
+    <h1>Voice Recorder and Chat</h1>
+    <h3>You can either send a message through text or voice note</h3>
+    <div class="record-btn-container">
+      <button id="recordBtn" class="record-btn">🎤</button>
+    </div>
+    <div class="audio-container" id="audioContainer"></div>
+    <button id="uploadBtn" class="upload-btn" style="display: none">
+      Upload Audio
+    </button>
+    <div class="chat-container">
+      <div class="messages" id="messages"></div>
 
-            <!-- Processing Indicator for Audio Transcription -->
-            <div id="processingIndicator" class="processing-indicator"
-                style="display: none;">Processing audio...</div>
+      <!-- Processing Indicator for Audio Transcription -->
+      <div
+        id="processingIndicator"
+        class="processing-indicator"
+        style="display: none"
+      >
+        Processing audio...
+      </div>
 
-            <!-- Agent Typing Indicator -->
-            <div id="agentTypingIndicator" class="agent-typing-indicator"
-                style="display: none;">Agent is typing...</div>
+      <!-- Agent Typing Indicator -->
+      <div
+        id="agentTypingIndicator"
+        class="agent-typing-indicator"
+        style="display: none"
+      >
+        Agent is typing...
+      </div>
 
-            <div class="chat-input-container">
-                <input type="text" id="userMessage"
-                    placeholder="Type your message..." disabled />
-                <button id="sendMessageBtn" disabled>Send</button>
-            </div>
-        </div>
+      <div class="chat-input-container">
+        <input
+          type="text"
+          id="userMessage"
+          placeholder="Type your message..."
+          disabled
+        />
+        <button id="sendMessageBtn" disabled>Send</button>
+      </div>
+    </div>
 
-        <script>
-        let mediaRecorder;
-        let audioChunks = [];
-        let recordedAudioBlob;
-        
-        document.getElementById("recordBtn").addEventListener("click", async function() {
-            if (!mediaRecorder || mediaRecorder.state === "inactive") {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
+    <script>
+      let mediaRecorder;
+      let audioChunks = [];
+      let recordedAudioBlob;
 
-                mediaRecorder.ondataavailable = event => {
-                    if (event.data.size > 0) {
-                        audioChunks.push(event.data);
-                    }
-                };
+      document
+        .getElementById("recordBtn")
+        .addEventListener("click", async function () {
+          if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+            });
+            mediaRecorder = new MediaRecorder(stream);
 
-                mediaRecorder.onstop = () => {
-                    recordedAudioBlob = new Blob(audioChunks, { type: "audio/wav" });
-                    const audioUrl = URL.createObjectURL(recordedAudioBlob);
-                    const audio = document.createElement("audio");
-                    audio.controls = true;
-                    audio.src = audioUrl;
-                    document.getElementById("audioContainer").appendChild(audio);
-                    audioChunks = [];
-                    document.getElementById("uploadBtn").style.display = 'block'; // Show upload button
-                    document.getElementById("uploadBtn").disabled = false; // Enable upload button
-                };
+            mediaRecorder.ondataavailable = (event) => {
+              if (event.data.size > 0) {
+                audioChunks.push(event.data);
+              }
+            };
 
-                mediaRecorder.start();
-                this.classList.add("recording");
-            } else {
-                mediaRecorder.stop();
-                this.classList.remove("recording");
-            }
+            mediaRecorder.onstop = () => {
+              recordedAudioBlob = new Blob(audioChunks, { type: "audio/wav" });
+              const audioUrl = URL.createObjectURL(recordedAudioBlob);
+              const audio = document.createElement("audio");
+              audio.controls = true;
+              audio.src = audioUrl;
+              document.getElementById("audioContainer").appendChild(audio);
+              audioChunks = [];
+              document.getElementById("uploadBtn").style.display = "block"; // Show upload button
+              document.getElementById("uploadBtn").disabled = false; // Enable upload button
+            };
+
+            mediaRecorder.start();
+            this.classList.add("recording");
+          } else {
+            mediaRecorder.stop();
+            this.classList.remove("recording");
+          }
         });
 
-        document.getElementById("uploadBtn").addEventListener("click", async function() {
-            document.getElementById("uploadBtn").disabled = true;
-            const formData = new FormData();
-            formData.append("audio", recordedAudioBlob);
+      document
+        .getElementById("uploadBtn")
+        .addEventListener("click", async function () {
+          document.getElementById("uploadBtn").disabled = true;
+          const formData = new FormData();
+          formData.append("audio", recordedAudioBlob);
 
-            document.getElementById("processingIndicator").style.display = "block";
-            document.getElementById("uploadBtn").disabled = true; 
+          document.getElementById("processingIndicator").style.display =
+            "block";
+          document.getElementById("uploadBtn").disabled = true;
 
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData 
-            });
+          const response = await fetch("/upload", {
+            method: "POST",
+            body: formData,
+          });
 
-            const data = await response.json();
-            const transcribedText = data.transcribed_text;
+          const data = await response.json();
+          const transcribedText = data.transcribed_text;
 
-            console.log("Transcribed text:", transcribedText);
-            const messagesContainer = document.getElementById("messages");
-            messagesContainer.innerHTML += `<p class="user-msg">${transcribedText}</p>`;
+          console.log("Transcribed text:", transcribedText);
+          const messagesContainer = document.getElementById("messages");
+          messagesContainer.innerHTML += `<p class="user-msg">${transcribedText}</p>`;
 
-            document.getElementById("uploadBtn").disabled = false;
+          document.getElementById("uploadBtn").disabled = false;
 
+          // Hide the processing indicator once transcription is done
+          document.getElementById("processingIndicator").style.display = "none";
 
-            // Hide the processing indicator once transcription is done
-            document.getElementById("processingIndicator").style.display = "none";
+          // Send the transcribed text for processing by the agent
+          document.getElementById("agentTypingIndicator").style.display =
+            "block"; // Show agent typing indicator
 
-            // Send the transcribed text for processing by the agent
-            document.getElementById("agentTypingIndicator").style.display = "block"; // Show agent typing indicator
+          const responseText = await fetch("/send_message", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ text: transcribedText }), // Use transcribed text here
+          });
 
-            const responseText = await fetch("/send_message", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ text: transcribedText }) // Use transcribed text here
-            });
+          const agentResponse = await responseText.json();
 
-            const agentResponse = await responseText.json();
-            
-            console.log("Agent response:", agentResponse.response);
-            messagesContainer.innerHTML += `<p class="agent-msg">${agentResponse.response}</p>`;
+          console.log("Agent response:", agentResponse.response);
+          messagesContainer.innerHTML += `<p class="agent-msg">${agentResponse.response}</p>`;
 
-            // Hide the agent typing indicator once the response is received
-            document.getElementById("agentTypingIndicator").style.display = "none";
+          // Hide the agent typing indicator once the response is received
+          document.getElementById("agentTypingIndicator").style.display =
+            "none";
         });
 
-        // Chat Section Logic
-        let isMessageBeingSent = false;
+      // Chat Section Logic
+      let isMessageBeingSent = false;
 
-        document.getElementById("sendMessageBtn").addEventListener("click", async function() {
-            const userMessage = document.getElementById("userMessage").value;
-            if (!userMessage || isMessageBeingSent) return;
+      document
+        .getElementById("sendMessageBtn")
+        .addEventListener("click", async function () {
+          const userMessage = document.getElementById("userMessage").value;
+          if (!userMessage || isMessageBeingSent) return;
 
-            // Display user message in the chat
-            const messagesContainer = document.getElementById("messages");
-            messagesContainer.innerHTML += `<p class="user-msg">${userMessage}</p>`;
-            document.getElementById("userMessage").value = ''; // Clear the input field
-            isMessageBeingSent = true;
-            document.getElementById("sendMessageBtn").disabled = true;
-            document.getElementById("userMessage").disabled = true;
+          // Display user message in the chat
+          const messagesContainer = document.getElementById("messages");
+          messagesContainer.innerHTML += `<p class="user-msg">${userMessage}</p>`;
+          document.getElementById("userMessage").value = ""; // Clear the input field
+          isMessageBeingSent = true;
+          document.getElementById("sendMessageBtn").disabled = true;
+          document.getElementById("userMessage").disabled = true;
 
-            // Show agent typing indicator while waiting for response
-            document.getElementById("agentTypingIndicator").style.display = "block";
+          // Show agent typing indicator while waiting for response
+          document.getElementById("agentTypingIndicator").style.display =
+            "block";
 
-            const response = await fetch("/send_message", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ text: userMessage })
-            });
+          const response = await fetch("/send_message", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ text: userMessage }),
+          });
 
-            const response_text = await response.json()
-            console.log(response_text)
+          const response_text = await response.json();
+          console.log(response_text);
 
-            // Display agent response in the chat
-            messagesContainer.innerHTML += `<p class="agent-msg">${response_text.response}</p>`;
-            isMessageBeingSent = false;
-            document.getElementById("sendMessageBtn").disabled = false;
-            document.getElementById("userMessage").disabled = false;
+          // Display agent response in the chat
+          messagesContainer.innerHTML += `<p class="agent-msg">${response_text.response}</p>`;
+          isMessageBeingSent = false;
+          document.getElementById("sendMessageBtn").disabled = false;
+          document.getElementById("userMessage").disabled = false;
 
-            // Hide typing indicator after receiving the response
-            document.getElementById("agentTypingIndicator").style.display = "none";
+          // Hide typing indicator after receiving the response
+          document.getElementById("agentTypingIndicator").style.display =
+            "none";
         });
 
-        // Enable the input and send button after the page loads
-        window.onload = () => {
-            document.getElementById("userMessage").disabled = false;
-            document.getElementById("sendMessageBtn").disabled = false;
-        };
+      // Enable the input and send button after the page loads
+      window.onload = () => {
+        document.getElementById("userMessage").disabled = false;
+        document.getElementById("sendMessageBtn").disabled = false;
+      };
     </script>
-    </body>
+  </body>
 </html>

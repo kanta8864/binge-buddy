@@ -1,19 +1,22 @@
 import json
+import logging
 from typing import List, Optional
-from binge_buddy import utils
-from binge_buddy.memory import Memory
-from binge_buddy.memory_db import MemoryDB
-from binge_buddy.memory_handler import MemoryHandler
-from binge_buddy.message import AgentMessage, Message
-from binge_buddy.message_log import MessageLog
-from binge_buddy.ollama import OllamaLLM
+
 from langchain.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
     SystemMessagePromptTemplate,
 )
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableLambda
-from langchain.schema import HumanMessage, SystemMessage, AIMessage
+
+from binge_buddy import utils
+from binge_buddy.memory import Memory
+from binge_buddy.memory_db import MemoryDB
+from binge_buddy.memory_handler import MemoryHandler, SemanticMemoryHandler
+from binge_buddy.message import AgentMessage, Message, UserMessage
+from binge_buddy.message_log import MessageLog
+from binge_buddy.ollama import OllamaLLM, OpenAILLM
 
 
 class ConversationalAgent:
@@ -74,7 +77,6 @@ class ConversationalAgent:
         Analyzes the current message and provide a response.
         """
         existing_memories = self.memory_handler.get_existing_memories(message.user_id)
-        print(existing_memories)
         if existing_memories:
             memories = [
                 AIMessage(
@@ -83,10 +85,15 @@ class ConversationalAgent:
                     )
                 )
             ]
+            logging.info(
+                f"Existing user memories for {message.user_id}: {[str(mem) for mem in existing_memories]}"
+            )
 
         else:
             memories = []
 
+        # Add the message to the log to trigger the memory workflow before calling the agent
+        self.add_user_message(message)
         # Run the pipeline and get the response
         response = utils.remove_think_tags(
             self.conversational_agent_runnable.invoke(
@@ -102,12 +109,34 @@ class ConversationalAgent:
                 }
             )
         )
-        self.message_log.add_message(message)
+
+        # Very stupid but just retry generating a response if it's not proper
+        if (
+            "HumanMessage" in response
+            or "SystemMessage" in response
+            or "AIMessage" in response
+        ) or not isinstance(response, str):
+            # Run the pipeline and get the response
+            response = utils.remove_think_tags(
+                self.conversational_agent_runnable.invoke(
+                    {
+                        "message": [message.to_langchain_message()],
+                        "message_logs": list(
+                            map(
+                                lambda message: message.to_langchain_message(),
+                                self.message_log,
+                            )
+                        ),
+                        "memories": memories,
+                    }
+                )
+            )
 
         agent_message = AgentMessage(
-            content=response, user_id="user", session_id="session"
+            content=response, user_id=message.user_id, session_id=message.session_id
         )
         self.message_log.add_message(agent_message)
+
         return response
 
     def add_user_message(self, message: Message):
@@ -119,19 +148,24 @@ class ConversationalAgent:
 
 if __name__ == "__main__":
     # Initialize the message log and LLM (for now, using a mock LLM)
-    llm = OllamaLLM()
-    message_log = MessageLog("user", "session")
+    llm = OpenAILLM()
+    # llm = OllamaLLM()
     memory_db = MemoryDB()
-    semantic_agent = ConversationalAgent(
-        llm=llm, message_log=message_log, memory_db=memory_db
+    mode = "semantic"
+    memory_handler = SemanticMemoryHandler(memory_db)
+
+    message_log = MessageLog(
+        "user", "session", memory_handler=memory_handler, mode=mode
     )
+    agent = ConversationalAgent(llm, message_log, memory_handler)  # Use shared LLM
 
     # Test message
-    current_message = Message(
+    current_message = UserMessage(
         content="I love watching sci-fi movies like The Matrix!",
         role="user",
         session_id="session",
         user_id="user",
     )
 
-    response = semantic_agent.process_message(current_message)
+    response = agent.process_message(current_message)
+    print(response)

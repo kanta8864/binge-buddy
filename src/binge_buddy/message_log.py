@@ -1,12 +1,15 @@
+import logging
+import threading
 from typing import Callable, Iterator, List, Optional
+
+from langchain.schema import HumanMessage
+
 from binge_buddy.agent_state.states import (
     AgentState,
     EpisodicAgentState,
     SemanticAgentState,
 )
 from binge_buddy.memory_workflow.semantic_workflow import SemanticWorkflow
-import threading
-from langchain.schema import HumanMessage
 from binge_buddy.message import Message, UserMessage
 
 
@@ -31,7 +34,7 @@ class MessageLog:
         self.subscribers.append(callback)
 
     def notify_subscribers(self, message: UserMessage):
-        print("notifying subscribers")
+        logging.info("notifying subscribers")
         for subscriber in self.subscribers:
             memories = self.memory_handler.get_existing_memories(message.user_id)
             if self.mode == "semantic":

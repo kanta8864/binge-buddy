@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 
 from binge_buddy.agent_state.states import (
@@ -7,6 +8,11 @@ from binge_buddy.agent_state.states import (
 )
 from binge_buddy.memory import SemanticMemory
 from binge_buddy.memory_db import MemoryDB
+
+# Configure logging (if not already configured elsewhere)
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class MemoryHandler(ABC):
@@ -38,6 +44,7 @@ class SemanticMemoryHandler(MemoryHandler):
         collection = self.memory_db.get_collection(self.collection_name)
         user_id = state.user_id
 
+        logging.info(f"Semantic Memory Handler: Adding memories...")
         for memory in state.aggregated_memories:
             if not memory.has_attribute():
                 continue
@@ -51,6 +58,8 @@ class SemanticMemoryHandler(MemoryHandler):
                 {"$set": {f"memory.{attribute}": memory_str}},
                 upsert=True,
             )
+
+            logging.info(f"memory.{attribute}: {memory_str}")
 
     def get_existing_memories(self, user_id):
         query = {"user_id": user_id}  # Query to find the user
@@ -94,7 +103,7 @@ class EpisodicMemoryHandler(MemoryHandler):
                 {"$push": {f"memory.{attribute}": db_entry}},
                 upsert=True,
             )
-            
+
     def get_existing_memories(self, user_id):
         query = {"user_id": user_id}  # Query to find the user
         result = self.memory_db.find_one(

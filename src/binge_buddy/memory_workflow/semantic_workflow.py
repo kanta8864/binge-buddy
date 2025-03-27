@@ -11,7 +11,7 @@ from binge_buddy.memory_db import MemoryDB
 from binge_buddy.memory_handler import SemanticMemoryHandler
 from binge_buddy.memory_workflow.multi_agent_workflow import MultiAgentWorkflow
 from binge_buddy.message import UserMessage
-from binge_buddy.ollama import OllamaLLM
+from binge_buddy.ollama import OllamaLLM, OpenAILLM
 from binge_buddy.state_graph import CustomStateGraph
 
 
@@ -20,8 +20,9 @@ class SemanticWorkflow(MultiAgentWorkflow):
         super().__init__()
 
         # todo: change this to use global llm
-        model = "deepseek-r1:8b"
-        llm = OllamaLLM(model=model)
+        model = "mistral:7b"
+        # llm = OllamaLLM(model=model)
+        llm = OpenAILLM()
         memory_sentinel = MemorySentinel(llm)
         memory_extractor = MemoryExtractor(llm)
         extractor_reviewer = ExtractorReviewer(llm)

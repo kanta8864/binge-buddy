@@ -143,6 +143,14 @@ class MemoryAttributor(BaseAgent):
 
         memories_with_attributes = self.format_memories(response, state)
 
+        # Attempt to run the pipeline once again
+        if not memories_with_attributes:
+            response = self.memory_aggregator_runnable.invoke(messages)
+
+            response = utils.remove_think_tags(response)
+
+            memories_with_attributes = self.format_memories(response, state)
+
         logging.info(f"Memory Attributor response: {response}")
 
         logging.info(f"Attributed Memories: {memories_with_attributes}")

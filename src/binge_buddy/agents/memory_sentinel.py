@@ -1,5 +1,6 @@
 import logging
 
+from langchain.llms.base import LLM
 from langchain.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
@@ -19,7 +20,7 @@ logging.basicConfig(
 
 
 class MemorySentinel(BaseAgent):
-    def __init__(self, llm: OllamaLLM):
+    def __init__(self, llm: LLM):
         super().__init__(
             llm=llm,
             system_prompt_initial="""

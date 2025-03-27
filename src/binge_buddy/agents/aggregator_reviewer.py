@@ -1,7 +1,8 @@
 import json
-import re
 import logging
+import re
 
+from langchain.llms.base import LLM
 from langchain.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
@@ -18,7 +19,7 @@ from binge_buddy.ollama import OllamaLLM
 
 
 class AggregatorReviewer(BaseAgent):
-    def __init__(self, llm: OllamaLLM):
+    def __init__(self, llm: LLM):
         super().__init__(
             llm=llm,
             system_prompt_initial="""
@@ -102,7 +103,7 @@ class AggregatorReviewer(BaseAgent):
                 ### **Important Notes**
                  **You MUST follow the exact response format.**  
                  **No extra explanations or formatting—only "APPROVED" or "REJECTED" with a clear repair message if needed.**  
-                 **Your decision must be precise, ensuring the final memory is both accurate and complete.**  
+                 **Your decision must be precise, ensuring the final memory is both accurate and complete. You don't have to be very strict and can be a little lenient.**  
 
                 ---
             """,
@@ -181,6 +182,7 @@ class AggregatorReviewer(BaseAgent):
 
         if parsed_output["status"] == "APPROVED":
             state.needs_repair = False
+            state.retry_count = 0
         else:
             state.needs_repair = True
             state.repair_message = AgentMessage(

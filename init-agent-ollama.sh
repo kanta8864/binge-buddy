@@ -14,7 +14,7 @@ cleanup() {
     docker compose down
 
     # Shut down Ollama server
-    pkill -f "ollama serve"
+    pkill -u "$(whoami)" -f "ollama serve"
 
     exit 0
 }
@@ -34,7 +34,7 @@ fi
 
 # Run Docker Compose
 echo "Starting Docker Compose..."
-docker compose up
+docker compose up -d
 
 # Step 2: Check if Ollama is installed and running
 if ! command -v ollama &> /dev/null; then
@@ -43,8 +43,15 @@ if ! command -v ollama &> /dev/null; then
     exit 1
 fi
 
-if ! pgrep -f "ollama serve" > /dev/null; then
+if ! lsof -i :11434 | grep LISTEN &> /dev/null; then
     echo "Ollama server is not running. Attempting to start..."
+
+    # Set environment variables for concurrency
+    export OLLAMA_NUM_PARALLEL=6
+    export OLLAMA_MAX_QUEUE=10
+    export OLLAMA_HOST="127.0.0.1:11434"  # Adjust if needed
+
+    # Start Ollama with environment variables applied
     ollama serve &> ollama.log &  # Run Ollama in the background and log output
     OLLAMA_PID=$!  # Store Ollama PID
 
@@ -53,7 +60,11 @@ if ! pgrep -f "ollama serve" > /dev/null; then
         echo "Ollama server failed to start. Exiting."
         docker compose down
         exit 1
+    else
+        echo "Ollama server started with PID $OLLAMA_PID and supports 4 concurrent requests."
     fi
+else
+    echo "Ollama server is already running."
 fi
 
 # Step 3: Run the Python script and keep it running
