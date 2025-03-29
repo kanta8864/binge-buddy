@@ -3,34 +3,110 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <title>Voice Recorder and Chat</title>
     <style>
-      .processing-indicator,
-      .agent-typing-indicator {
-        font-size: 16px;
-        color: #888;
-        margin-top: 10px;
-      }
       body {
         font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 0;
+        display: flex;
+        height: 100vh;
         margin: 0;
+        justify-content: center;
+        align-items: center;
+        background-color: #f0f0f0;
+      }
+
+      .chat-container {
+        width: 50%;
+        max-width: 600px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;
-        height: 100vh; /* Full viewport height */
+        padding: 20px;
+        height: 80vh;
+        position: relative;
+        overflow: hidden;
       }
+
+      .messages {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        flex-grow: 1;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        padding-right: 10px;
+      }
+
+      .messages div {
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 80%;
+        word-wrap: break-word;
+      }
+
+      .user-msg {
+        text-align: left;
+        background-color: #d1e7ff;
+        align-self: flex-start;
+      }
+
+      .agent-msg {
+        text-align: left;
+        background-color: #e8e8e8;
+        align-self: flex-end;
+        margin-left: auto;
+        margin-right: 10px;
+      }
+
+      .chat-input-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: white;
+        position: sticky;
+        bottom: 0;
+        width: 100%;
+        border-top: 1px solid #ddd;
+      }
+
+      .chat-input-container input {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        flex-grow: 1;
+      }
+
+      .chat-input-container button {
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 10px;
+      }
+
+      .chat-input-container button:disabled {
+        background-color: #ccc;
+      }
+
+      /* Record Button Styles */
       .record-btn-container {
         display: flex;
         justify-content: center;
         align-items: center;
         margin-top: 20px;
-        width: 100%; /* Ensure it takes full width */
       }
 
       .record-btn {
-        width: 60px; /* Set a fixed width */
-        height: 60px; /* Set a fixed height */
+        width: 60px;
+        height: 60px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -45,9 +121,11 @@
       .record-btn.recording {
         background-color: darkred;
       }
+
       .audio-container {
         margin-top: 20px;
       }
+
       .upload-btn {
         margin-top: 20px;
         padding: 10px 20px;
@@ -56,129 +134,98 @@
         border: none;
         cursor: pointer;
         font-size: 16px;
+        max-width: 200px;
+        margin: 0 auto;
+        display: block;
       }
+
       .upload-btn:disabled {
         background-color: #ccc;
       }
-      .input-container {
-        margin-top: 20px;
-      }
-      .input-container input {
-        padding: 10px;
+
+      /* Processing and Typing Indicators */
+      .processing-indicator,
+      .agent-typing-indicator {
         font-size: 16px;
-        width: 300px;
+        color: #888;
+        margin-top: 10px;
       }
-      /* Chat interface styling */
-      .chat-container {
-        flex-grow: 1; /* Allow it to take available space */
+
+      .typing-indicator-container {
+        min-height: 30px;
         display: flex;
-        flex-direction: column;
-        max-width: 600px;
-        width: 100%;
-        margin: auto;
-        border: 1px solid #ddd;
-        padding: 10px;
-        background-color: #f9f9f9;
-        border-radius: 10px;
-        height: auto; /* Let it expand dynamically */
-        min-height: 0; /* Prevent flex issues */
-      }
-
-      .messages {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start; /* Default alignment for user messages */
-        flex-grow: 1;
-        overflow-y: auto;
-        max-height: calc(100vh - 200px); /* Adjust dynamically */
-      }
-
-      .messages p {
-        margin: 5px 0;
-        padding: 10px;
-        border-radius: 10px;
-        max-width: 60%; /* Limit the width of the message bubbles */
-        word-wrap: break-word; /* Ensure long words don't overflow */
-      }
-
-      .user-msg {
-        text-align: left;
-        background-color: #d1e7ff;
-        align-self: flex-start; /* Align to the left */
-      }
-
-      .agent-msg {
-        text-align: left;
-        background-color: #e8e8e8;
-        align-self: flex-end; /* Pushes this message bubble to the right */
-        margin-left: auto;
-        margin-right: 10px; /* Optional: adds spacing from the right edge */
-      }
-
-      .chat-input-container {
-        display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 10px;
-        background-color: white;
-        position: sticky;
-        bottom: 0;
+        justify-content: flex-start;
+        padding: 5px 10px;
       }
 
-      .chat-input-container input {
-        padding: 10px;
+      .agent-typing-indicator,
+      .processing-indicator {
         font-size: 16px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        flex-grow: 1; /* Allow input field to expand based on content */
-        max-width: 80%; /* Prevent it from growing too large */
-        min-width: 120px; /* Minimum width for the input field */
+        color: #888;
+        display: none;
       }
 
-      .chat-input-container button {
-        padding: 10px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-left: 10px; /* Add some space between the input and button */
+      .left-containers {
+        width: 50%
       }
 
-      .chat-input-container button:disabled {
-        background-color: #ccc;
+      /* Chat Layout Adjustment */
+      .left-containers h1 {
+        font-size: 24px;
+      }
+
+      .left-containers div {
+        margin-top: 10px;
+      }
+
+      .typing-indicator-container {
+        min-height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 5px 10px;
+      }
+      #record-upload-container {
+        display: flex;
+        align-items: center;
+      }
+      #uploadBtn {
+        height: 40px;
       }
     </style>
   </head>
   <body>
-    <h1>Voice Recorder and Chat</h1>
-    <h3>You can either send a message through text or voice note</h3>
-    <div class="record-btn-container">
-      <button id="recordBtn" class="record-btn">🎤</button>
+    <div class="left-containers">
+      <div>
+        <h1>Binge Buddy: Your streaming buddy</h1>
+        <div>You can either send a message through text or voice note by
+          clicking
+          on
+          the mic button</div>
+        <div class="record-btn-container">
+          <button id="recordBtn" class="record-btn">🎤</button>
+        </div>
+        <div id="record-upload-container">
+          <div class="audio-container" id="audioContainer"></div>
+          <button id="uploadBtn" class="upload-btn" style="display: none">
+            Upload Audio
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="audio-container" id="audioContainer"></div>
-    <button id="uploadBtn" class="upload-btn" style="display: none">
-      Upload Audio
-    </button>
     <div class="chat-container">
       <div class="messages" id="messages"></div>
-
       <!-- Processing Indicator for Audio Transcription -->
-      <div
-        id="processingIndicator"
-        class="processing-indicator"
-        style="display: none"
-      >
-        Processing audio...
-      </div>
-
-      <!-- Agent Typing Indicator -->
-      <div
-        id="agentTypingIndicator"
-        class="agent-typing-indicator"
-        style="display: none"
-      >
-        Agent is typing...
+      <div class="typing-indicator-container">
+        <div id="agentTypingIndicator" class="agent-typing-indicator"
+          style="display: none">
+          Agent is typing...
+        </div>
+        <div id="processingIndicator" class="processing-indicator"
+          style="display: none">
+          Processing audio...
+        </div>
       </div>
 
       <div class="chat-input-container">
@@ -186,8 +233,7 @@
           type="text"
           id="userMessage"
           placeholder="Type your message..."
-          disabled
-        />
+          disabled />
         <button id="sendMessageBtn" disabled>Send</button>
       </div>
     </div>
@@ -197,135 +243,127 @@
       let audioChunks = [];
       let recordedAudioBlob;
 
-      document
-        .getElementById("recordBtn")
-        .addEventListener("click", async function () {
-          if (!mediaRecorder || mediaRecorder.state === "inactive") {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: true,
-            });
-            mediaRecorder = new MediaRecorder(stream);
+      document.getElementById("recordBtn").addEventListener("click", async function () {
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          mediaRecorder = new MediaRecorder(stream);
 
-            mediaRecorder.ondataavailable = (event) => {
-              if (event.data.size > 0) {
-                audioChunks.push(event.data);
-              }
-            };
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunks.push(event.data);
+            }
+          };
 
-            mediaRecorder.onstop = () => {
-              recordedAudioBlob = new Blob(audioChunks, { type: "audio/wav" });
-              const audioUrl = URL.createObjectURL(recordedAudioBlob);
-              const audio = document.createElement("audio");
-              audio.controls = true;
-              audio.src = audioUrl;
-              document.getElementById("audioContainer").appendChild(audio);
-              audioChunks = [];
-              document.getElementById("uploadBtn").style.display = "block"; // Show upload button
-              document.getElementById("uploadBtn").disabled = false; // Enable upload button
-            };
+          mediaRecorder.onstop = () => {
+            recordedAudioBlob = new Blob(audioChunks, { type: "audio/wav" });
+            const audioUrl = URL.createObjectURL(recordedAudioBlob);
+            const audio = document.createElement("audio");
+            audio.controls = true;
+            audio.src = audioUrl;
+            document.getElementById("audioContainer").innerHTML = '';
+            document.getElementById("audioContainer").appendChild(audio);
+            audioChunks = [];
+            document.getElementById("uploadBtn").style.display = "block"; // Show upload button
+            document.getElementById("uploadBtn").disabled = false; // Enable upload button
+            document.getElementById("record-upload-container").style.display = "flex";
+          };
 
-            mediaRecorder.start();
-            this.classList.add("recording");
-          } else {
-            mediaRecorder.stop();
-            this.classList.remove("recording");
-          }
+          mediaRecorder.start();
+          this.classList.add("recording");
+        } else {
+          mediaRecorder.stop();
+          this.classList.remove("recording");
+        }
+      });
+
+      document.getElementById("uploadBtn").addEventListener("click", async function () {
+        document.getElementById("uploadBtn").disabled = true;
+        const formData = new FormData();
+        formData.append("audio", recordedAudioBlob);
+
+        document.getElementById("processingIndicator").style.display = "block";
+        document.getElementById("uploadBtn").disabled = true;
+
+        const response = await fetch("/upload", {
+          method: "POST",
+          body: formData,
         });
 
-      document
-        .getElementById("uploadBtn")
-        .addEventListener("click", async function () {
-          document.getElementById("uploadBtn").disabled = true;
-          const formData = new FormData();
-          formData.append("audio", recordedAudioBlob);
+        const data = await response.json();
+        const transcribedText = data.transcribed_text;
 
-          document.getElementById("processingIndicator").style.display =
-            "block";
-          document.getElementById("uploadBtn").disabled = true;
+        console.log("Transcribed text:", transcribedText);
+        const messagesContainer = document.getElementById("messages");
+        messagesContainer.innerHTML += `<div class="user-msg">${transcribedText}</div>`;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-          const response = await fetch("/upload", {
-            method: "POST",
-            body: formData,
-          });
+        document.getElementById("uploadBtn").disabled = false;
+        document.getElementById("record-upload-container").style.display = "none";
+        document.getElementById("processingIndicator").style.display = "none";
 
-          const data = await response.json();
-          const transcribedText = data.transcribed_text;
+        document.getElementById("agentTypingIndicator").style.display = "block"; 
 
-          console.log("Transcribed text:", transcribedText);
-          const messagesContainer = document.getElementById("messages");
-          messagesContainer.innerHTML += `<p class="user-msg">${transcribedText}</p>`;
-
-          document.getElementById("uploadBtn").disabled = false;
-
-          // Hide the processing indicator once transcription is done
-          document.getElementById("processingIndicator").style.display = "none";
-
-          // Send the transcribed text for processing by the agent
-          document.getElementById("agentTypingIndicator").style.display =
-            "block"; // Show agent typing indicator
-
-          const responseText = await fetch("/send_message", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ text: transcribedText }), // Use transcribed text here
-          });
-
-          const agentResponse = await responseText.json();
-
-          console.log("Agent response:", agentResponse.response);
-          messagesContainer.innerHTML += `<p class="agent-msg">${agentResponse.response}</p>`;
-
-          // Hide the agent typing indicator once the response is received
-          document.getElementById("agentTypingIndicator").style.display =
-            "none";
+        const responseText = await fetch("/send_message", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: transcribedText }),
         });
 
-      // Chat Section Logic
+        const agentResponse = await responseText.json();
+
+        console.log("Agent response:", agentResponse.response);
+        let formattedResponse = marked.parse(agentResponse.response); 
+        
+        formattedResponse = formattedResponse.replace(/<\/?p>/g, '');
+        console.log(formattedResponse);
+        messagesContainer.innerHTML += `<div class="agent-msg">${formattedResponse}</div>`;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        document.getElementById("agentTypingIndicator").style.display = "none";
+      });
+
       let isMessageBeingSent = false;
 
-      document
-        .getElementById("sendMessageBtn")
-        .addEventListener("click", async function () {
-          const userMessage = document.getElementById("userMessage").value;
-          if (!userMessage || isMessageBeingSent) return;
+      document.getElementById("sendMessageBtn").addEventListener("click", async function () {
+        const userMessage = document.getElementById("userMessage").value;
+        if (!userMessage || isMessageBeingSent) return;
 
-          // Display user message in the chat
-          const messagesContainer = document.getElementById("messages");
-          messagesContainer.innerHTML += `<p class="user-msg">${userMessage}</p>`;
-          document.getElementById("userMessage").value = ""; // Clear the input field
-          isMessageBeingSent = true;
-          document.getElementById("sendMessageBtn").disabled = true;
-          document.getElementById("userMessage").disabled = true;
+        const messagesContainer = document.getElementById("messages");
+        messagesContainer.innerHTML += `<div class="user-msg">${userMessage}</div>`;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        document.getElementById("userMessage").value = ""; 
+        isMessageBeingSent = true;
+        document.getElementById("sendMessageBtn").disabled = true;
+        document.getElementById("userMessage").disabled = true;
 
-          // Show agent typing indicator while waiting for response
-          document.getElementById("agentTypingIndicator").style.display =
-            "block";
+        document.getElementById("agentTypingIndicator").style.display = "block";
 
-          const response = await fetch("/send_message", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ text: userMessage }),
-          });
-
-          const response_text = await response.json();
-          console.log(response_text);
-
-          // Display agent response in the chat
-          messagesContainer.innerHTML += `<p class="agent-msg">${response_text.response}</p>`;
-          isMessageBeingSent = false;
-          document.getElementById("sendMessageBtn").disabled = false;
-          document.getElementById("userMessage").disabled = false;
-
-          // Hide typing indicator after receiving the response
-          document.getElementById("agentTypingIndicator").style.display =
-            "none";
+        const response = await fetch("/send_message", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: userMessage }),
         });
 
-      // Enable the input and send button after the page loads
+        const agentResponse = await response.json();
+        console.log("Agent response:", agentResponse.response);
+        let formattedResponse = marked.parse(agentResponse.response); 
+        formattedResponse = formattedResponse.replace(/<\/?p>/g, '');
+        messagesContainer.innerHTML += `<div class="agent-msg">${formattedResponse}</div>`;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        isMessageBeingSent = false;
+        document.getElementById("sendMessageBtn").disabled = false;
+        document.getElementById("userMessage").disabled = false;
+
+        document.getElementById("agentTypingIndicator").style.display = "none";
+      });
+
       window.onload = () => {
         document.getElementById("userMessage").disabled = false;
         document.getElementById("sendMessageBtn").disabled = false;
