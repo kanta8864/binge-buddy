@@ -6,13 +6,8 @@ from binge_buddy.agent_state.states import (
     EpisodicAgentState,
     SemanticAgentState,
 )
-from binge_buddy.memory import SemanticMemory
+from binge_buddy.memory import EpisodicMemory, SemanticMemory
 from binge_buddy.memory_db import MemoryDB
-
-# Configure logging (if not already configured elsewhere)
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
 
 
 class MemoryHandler(ABC):
@@ -88,32 +83,47 @@ class EpisodicMemoryHandler(MemoryHandler):
         collection = self.memory_db.get_collection(self.collection_name)
         user_id = state.user_id
 
+        logging.info(f"Episodic Memory Handler: Adding memories for user {user_id}...")
+
         for memory in state.extracted_memories:
             if not memory.has_attribute():
                 continue
 
-            db_entry = (
-                memory.as_db_entry()
-            )  # {attribute: memory_str, timestamp: timestamp_as_iso_string}
+            db_entry = memory.as_db_entry()
             attribute = memory.attribute
 
-            # Append new (memory, timestamp) entry to existing attribute
+            memory_info = db_entry[attribute]
+            timestamp = db_entry["timestamp"]
+
             collection.update_one(
                 {"user_id": user_id},
-                {"$push": {f"memory.{attribute}": db_entry}},
+                {
+                    "$push": {
+                        f"memory.{attribute}": {
+                            "information": memory_info,
+                            "timestamp": timestamp,
+                        }
+                    }
+                },
                 upsert=True,
             )
+            logging.info(f"Added to memory.{attribute}: '{memory_info}' at {timestamp}")
 
     def get_existing_memories(self, user_id):
-        query = {"user_id": user_id}  # Query to find the user
-        result = self.memory_db.find_one(
-            self.collection_name, query
-        )  # Fetch the document
+        query = {"user_id": user_id}
+        result = self.memory_db.find_one(self.collection_name, query)
+
         existing_memories = []
-        if result:
-            for attr, information in result["memory"].items():
-                existing_memories.append(
-                    SemanticMemory(information=information, attribute=attr)
-                )
+
+        if result and "memory" in result:
+            for attr, memories in result["memory"].items():  # Iterate over attributes
+                for memory_entry in memories:  # Iterate over memory list
+                    existing_memories.append(
+                        EpisodicMemory(
+                            information=memory_entry["information"],
+                            attribute=attr,
+                            timestamp=memory_entry["timestamp"],
+                        )
+                    )
 
         return existing_memories

@@ -86,7 +86,7 @@ class FrontEnd:
 
     def run_flask(self):
         """Start the Flask application."""
-        self.app.run(port=6555, host="0.0.0.0", debug=True)
+        self.app.run(port=6555, host="0.0.0.0", debug=False)
 
 
 if __name__ == "__main__":

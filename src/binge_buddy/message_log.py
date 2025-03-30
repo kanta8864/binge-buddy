@@ -9,6 +9,7 @@ from binge_buddy.agent_state.states import (
     EpisodicAgentState,
     SemanticAgentState,
 )
+from binge_buddy.memory_workflow.episodic_workflow import EpisodicWorkflow
 from binge_buddy.memory_workflow.semantic_workflow import SemanticWorkflow
 from binge_buddy.message import Message, UserMessage
 
@@ -21,8 +22,12 @@ class MessageLog:
         self.subscribers: List[Callable[[AgentState], None]] = []
         self.memory_handler = memory_handler
         self.mode = mode
-        # todo: please please fix this. my brain did not work.
-        workflow = SemanticWorkflow(memory_handler)
+
+        if self.mode == "semantic":
+            workflow = SemanticWorkflow(memory_handler)
+        else:
+            workflow = EpisodicWorkflow(memory_handler)
+
         self.subscribe(workflow.run)
 
     def add_message(self, message: Message):

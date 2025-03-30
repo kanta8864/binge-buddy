@@ -1,13 +1,6 @@
 import logging
 import sys
 
-# Configure logging to print to the console
-logging.basicConfig(
-    level=logging.INFO,  # Set log level to INFO
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],  # Print to console
-)
-
 
 class CustomStateGraph:
     def __init__(self, state_cls):

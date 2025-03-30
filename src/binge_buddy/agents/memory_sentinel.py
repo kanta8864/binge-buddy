@@ -13,11 +13,6 @@ from binge_buddy.agent_state.states import AgentState, AgentStateDict
 from binge_buddy.agents.base_agent import BaseAgent
 from binge_buddy.ollama import OllamaLLM
 
-# Configure logging (if not already configured elsewhere)
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
 
 class MemorySentinel(BaseAgent):
     def __init__(self, llm: LLM):

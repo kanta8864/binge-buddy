@@ -2,6 +2,8 @@
 
 # Function to handle cleanup on exit
 cleanup() {
+    local exit_code=$1  # Accept an exit code argument
+
     echo -e "\nShutting down..."
     
     # Kill the Python process if it's running
@@ -13,10 +15,10 @@ cleanup() {
     # Shut down Docker Compose
     docker compose down
 
-    exit 0
+    exit "$exit_code"  # Exit with the provided exit code
 }
 
-trap cleanup INT
+trap 'cleanup 0' INT  # Use single quotes to prevent premature expansion
 
 # Step 1: Check if Docker is installed and running
 if ! command -v docker &> /dev/null; then
@@ -48,7 +50,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             echo "Unknown argument: $1"
-            exit 1
+            cleanup 1  # Pass exit code 1
             ;;
     esac
 done
@@ -56,7 +58,7 @@ done
 # Check if both user and mode arguments are provided
 if [[ -z "$USER" ]] || [[ -z "$MODE" ]]; then
     echo "Error: Both --user and --mode arguments are required."
-    exit 1
+    cleanup 1  # Pass exit code 1
 fi
 
 # Step 2: Run the Python script with user and mode arguments
@@ -73,6 +75,6 @@ while true; do
     # If the Python process exits with an error, show the message and clean up
     if [[ $PYTHON_EXIT_CODE -ne 0 ]]; then
         echo "Python script exited with an error (exit code $PYTHON_EXIT_CODE)."
-        cleanup
+        cleanup "$PYTHON_EXIT_CODE"
     fi
 done

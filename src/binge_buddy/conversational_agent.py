@@ -91,6 +91,7 @@ class ConversationalAgent:
 
         else:
             memories = []
+            logging.info(f"No existing user memories found...")
 
         # Add the message to the log to trigger the memory workflow before calling the agent
         self.add_user_message(message)

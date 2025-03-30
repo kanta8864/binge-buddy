@@ -19,11 +19,6 @@ from binge_buddy.memory import EpisodicMemory, Memory, SemanticMemory
 from binge_buddy.message import AgentMessage
 from binge_buddy.ollama import OllamaLLM
 
-# Configure logging (if not already configured elsewhere)
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
 
 class MemoryExtractor(BaseAgent):
     def __init__(self, llm: OllamaLLM):
