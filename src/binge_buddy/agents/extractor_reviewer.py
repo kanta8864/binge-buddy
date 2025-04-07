@@ -73,6 +73,7 @@ class ExtractorReviewer(BaseAgent):
                 ---
 
                 Remember, only respond using the output format specified and nothing else. Do not include any additional explanations, reasoning, or commentary outside of the specified format.
+                AND REMEMBER, DO NOT BE TOO STRICT.
                 """,
         )
 

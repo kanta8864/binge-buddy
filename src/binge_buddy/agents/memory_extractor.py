@@ -92,8 +92,8 @@ class MemoryExtractor(BaseAgent):
 
                 ```python
                 [
-                    "...",
-                    "...",
+                    "likes scifi",
+                    "has Netflix",
                     "..."
                 ]
                 ```

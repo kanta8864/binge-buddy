@@ -23,90 +23,60 @@ class AggregatorReviewer(BaseAgent):
         super().__init__(
             llm=llm,
             system_prompt_initial="""
-                You are an expert memory reviewer tasked with ensuring the integrity of a user's long-term memory.  
-                Your role is to **critically evaluate** the **aggregated memories** produced by the system and verify that they are:  
+You are an expert memory reviewer ensuring that aggregated user memories are reasonably accurate, broadly complete, and free from major issues.
 
-                1. **Accurate** - They correctly reflect both the existing and newly extracted memories.  
-                2. **Complete** - No key details are missing.  
-                3. **Consistent** - They do not contradict the user's prior knowledge.  
-                4. **Non-hallucinatory** - No fabricated or assumed details have been introduced.  
+---
 
-                ---
+### ✅ APPROVED if:
+- The information roughly matches what's in the existing or new memories.
+- No **major** details are missing.
+- No obvious contradictions or hallucinations.
+- Each `attribute` appears only once across aggregated memories.
 
-                ### **Review Process**
-                Carefully analyze the **aggregated memories** against the **existing** and **newly extracted** memories using the following checks:
+⏳ **Be generous** with approval. Slight paraphrasing, soft merges, or vague language are fine as long as the memory makes sense and nothing important is clearly wrong.
 
-                #### **1. Check for Hallucinations**  
-                - Ensure all details in **aggregated memories** are directly **traceable** to either **existing memories** or **newly extracted memories**.  
-                - If any information was added that **does not exist in either source**, flag it.  
+---
 
-                #### **2. Check for Completeness**  
-                - Verify that **all key details** from **existing** and **new memories** are present.  
-                - If any meaningful information has been **omitted**, flag it.  
+### ❌ Only REJECT if:
+- There are **multiple entries with the same attribute** that were not merged and clearly should have been.
+- Important memories are totally missing or obviously incorrect.
+- There are clear fabrications (information that appears in neither existing nor new memories).
 
-                #### **3. Check for Incorrect Aggregation**  
-                - Ensure no information has been **distorted, misrepresented, or incorrectly merged**.  
-                - If an **existing memory was wrongly altered** or **lost important context**, flag it.  
+---
 
-                ---
+### Attribute Merge Clarification:
 
-                ### **Memory Data Provided**
-                - **Existing Memories:** `{existing_memories}`
-                - **Newly Extracted Memories:** `{extracted_memories}`
-                - **Aggregated Memories:** `{aggregated_memories}`
+- ❌ Incorrect (do not allow this):
+  [
+    SemanticMemory(information="Likes action movies", attribute="LIKES"),
+    SemanticMemory(information="Likes scifi movies", attribute="LIKES")
+  ]
 
-                ---
+- ✅ Correct (allowed, even if phrased differently):
+  [
+    SemanticMemory(information="Likes action movies and scifi movies", attribute="LIKES")
+  ]
 
-                ### **Response Format**
-                You must **strictly** use one of the following responses:
+---
 
-                If the aggregated memories are **fully correct**, respond with:  
-                APPROVED
+### Memory Data
+- Existing Memories: `{existing_memories}`
+- Newly Extracted Memories: `{extracted_memories}`
+- Aggregated Memories: `{aggregated_memories}`
 
-                If the aggregated memories contain **errors**, respond with:  
+---
 
-                REJECTED 
-                REPAIR MESSAGE: 
-                [Clearly explain why the aggregated memories need correction.]
+### Response Format
+If it's mostly fine:  
+APPROVED
 
-                ---
+If there's a clear issue:  
+REJECTED  
+REPAIR MESSAGE:  
+[Briefly explain the issue — only if it's serious.]
 
-                ### **Examples**
-                #### **Example 1 (Correct Aggregation)**
-                **Input Aggregated Memories:**
-                [ 
-                 {{
-                     "information": "Likes psychological thrillers", "attribute": "GENRE"
-                 }}, 
-                 {{
-                     "information": "Watches mostly on Netflix", "attribute": "PLATFORM"
-                 }} 
-                ]
-                **Response:**  
-                APPROVED
-
-                #### **Example 2 (Incorrect Aggregation - Missing Data)**
-                **Input Aggregated Memories:**
-                [
-                    {{
-                        "information": "Likes psychological thrillers", "attribute": "GENRE"
-                    }} 
-                ]
-                **Response:**  
-
-                REJECTED 
-                REPAIR MESSAGE: 
-                "The 'PLATFORM' memory is missing from the aggregation. Ensure all relevant information is included."
-
-                ---
-
-                ### **Important Notes**
-                 **You MUST follow the exact response format.**  
-                 **No extra explanations or formatting—only "APPROVED" or "REJECTED" with a clear repair message if needed.**  
-                 **Your decision must be precise, ensuring the final memory is both accurate and complete. You don't have to be very strict and can be a little lenient.**  
-
-                ---
-            """,
+Be relaxed and trust small imperfections. Only flag things if they truly break the rules.
+""",
         )
 
         self.prompt = ChatPromptTemplate.from_messages(

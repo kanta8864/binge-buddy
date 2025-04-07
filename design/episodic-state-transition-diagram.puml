@@ -25,14 +25,7 @@ state MemoryAttributor {
     MemoryAttributor: process(state: EpisodicAgentState)
 }
 
-MemoryAttributor --> AttributeReviewer : Attributes Assigned
-
-state AttributeReviewer {
-    AttributeReviewer: process(state: EpisodicAgentState)
-}
-
-AttributeReviewer --> MemoryHandler : Attributes Verified
-AttributeReviewer --> MemoryAttributor : needs_repair == True \n Provide Repair Message
+MemoryAttributor --> MemoryHandler : Attributes Assigned
 
 state MemoryHandler {
     MemoryHandler: process(state: EpisodicAgentState)
