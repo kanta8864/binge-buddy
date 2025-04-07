@@ -25,14 +25,8 @@ state MemoryAttributor {
     MemoryAttributor: process(state: AgentState)
 }
 
-MemoryAttributor --> AttributeReviewer : Attributes Assigned
 
-state AttributeReviewer {
-    AttributeReviewer: process(state: AgentState)
-}
-
-AttributeReviewer --> MemoryAggregator : Attributes Verified
-AttributeReviewer --> MemoryAttributor : needs_repair == True \n Provide Repair Message
+MemoryAttributor --> MemoryAggregator : Attributes Assigned
 
 state MemoryAggregator {
     MemoryAggregator: process(state: SemanticAgentState)
